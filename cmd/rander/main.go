@@ -8,11 +8,13 @@ import (
 	"os"
 	"strconv"
 	"text/tabwriter"
+
+	"github.com/abstract300/rander"
 )
 
 var logger = log.New(os.Stdout, "LOGGER: ", log.Lshortfile)
 
-const SourceFile = "./dictionary"
+const SourceFile = "../../assets/dictionary"
 
 func main() {
 	flag.Parse()
