@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -12,89 +13,36 @@ import (
 
 var logger = log.New(os.Stdout, "LOGGER: ", log.Lshortfile)
 
-const WORDCOUNT = 54763
-const source = "dictionary"
+const SourceFile = "./dictionary"
 
 func main() {
-	rndSrc := rand.NewSource(time.Now().UnixNano())
-	rndNum := rand.New(rndSrc)
-	num1, num2 := rndNum.Int()%WORDCOUNT, rndNum.Int()%WORDCOUNT
-
-	word, err := generateWord(num1, num2, source)
+	f, err := os.Open(SourceFile)
 	if err != nil {
-		logger.Println(err)
+		logger.Fatal("Could not open source file", err)
 	}
-	fmt.Println("Your Random word: ", word)
+	generator := NewWordGenerator(bufio.NewReader(f))
+	word := generator.GenerateWord() + generator.GenerateWord()
+	fmt.Println("Your random word: ", word)
 }
 
-type Word struct {
-	First string
-	Last  string
+type WordGenerator struct {
+	words []string
+	rand *rand.Rand
 }
 
-type WordError struct {
-	msg string
-	err error
+func (g *WordGenerator) GenerateWord() string {
+	return strings.Title(g.words[g.rand.Intn(len(g.words))])
 }
 
-func (we WordError) Error() string {
-	return fmt.Sprintf("Here: %s -> Origin: {%s}", we.msg, we.err)
-}
-
-func generateWord(num1, num2 int, filename string) (string, error) {
-	var word Word
-	we := WordError{}
-	wordList := make([]string, 0)
-
-	file, err := readWords(filename)
-	if err != nil {
-		we.msg = "Couldn't fetch file data that was read."
-		we.err = err
-		return "", we
-	}
-	scanner := bufio.NewScanner(strings.NewReader(string(file)))
+func NewWordGenerator(reader io.Reader) *WordGenerator {
+	words := make([]string, 0)
+	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
-		wordList = append(wordList, scanner.Text())
+		words = append(words, scanner.Text())
 	}
-
-	word.First = strings.Title(wordList[num1])
-	word.Last = strings.Title(wordList[num2])
-
-	return word.First + word.Last, nil
-}
-
-func readWords(fileName string) ([]byte, error) {
-	var b []byte
-	rwerr := WordError{}
-	f, err := os.Open(fileName)
-	if err != nil {
-		rwerr.err = err
-		rwerr.msg = "Couldn't open the target file"
-		return b, rwerr
+	return &WordGenerator{
+		words: words,
+		rand: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
-
-	fileInfo, err := f.Stat()
-	if err != nil {
-		rwerr.err = err
-		rwerr.msg = "Cannot stat on the target file."
-		return b, err
-	}
-
-	size := fileInfo.Size()
-
-	b = make([]byte, size)
-
-	_, err = f.Read(b)
-	if err != nil {
-		rwerr.err = err
-		rwerr.msg = "Cannot read content from file."
-		return b, err
-	}
-
-	return b, nil
-}
-
-func (w Word) String() string {
-	return fmt.Sprintf("%s%s", w.First, w.Last)
 }
