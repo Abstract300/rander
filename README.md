@@ -1,4 +1,4 @@
 Currently: BAD
 
 #TODO:
-- Generate a table of <X> outputs
+- ~~Generate a table of <X> outputs~~
