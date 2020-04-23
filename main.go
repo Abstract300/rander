@@ -22,7 +22,7 @@ func main() {
 
 	word, err := generateWord(num1, num2, source)
 	if err != nil {
-		log.Println(err)
+		logger.Println(err)
 	}
 	fmt.Println("Your Random word: ", word)
 }
@@ -38,7 +38,7 @@ type WordError struct {
 }
 
 func (we WordError) Error() string {
-	return fmt.Sprintf("What: %s | How: %s", we.msg, we.err)
+	return fmt.Sprintf("Here: %s -> Origin: {%s}", we.msg, we.err)
 }
 
 func generateWord(num1, num2 int, filename string) (string, error) {
@@ -58,24 +58,15 @@ func generateWord(num1, num2 int, filename string) (string, error) {
 		wordList = append(wordList, scanner.Text())
 	}
 
-	word.First = wordList[num1]
-	word.Last = wordList[num2]
+	word.First = strings.Title(wordList[num1])
+	word.Last = strings.Title(wordList[num2])
 
 	return word.First + word.Last, nil
 }
 
-type readWordsError struct {
-	msg string
-	err error
-}
-
-func (rwe readWordsError) Error() string {
-	return fmt.Sprintf("What: %s | How: %s", rwe.msg, rwe.err)
-}
-
 func readWords(fileName string) ([]byte, error) {
 	var b []byte
-	rwerr := readWordsError{}
+	rwerr := WordError{}
 	f, err := os.Open(fileName)
 	if err != nil {
 		rwerr.err = err
